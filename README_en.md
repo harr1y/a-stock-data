@@ -1,331 +1,267 @@
 <p align="center"><a href="README.md">简体中文</a> | <b>English</b></p>
 
-<h1 align="center">a-stock-data</h1>
+<h1 align="center">Vibe-Research · Your Personal AI Research Dashboard (A-share / US / HK)</h1>
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![GitHub stars](https://img.shields.io/github/stars/simonlin1212/Vibe-Research?style=social)](https://github.com/simonlin1212/Vibe-Research/stargazers)
+[![中文 README](https://img.shields.io/badge/📖_中文-README-F35D2B?style=flat)](README.md)
 
 <p align="center">
-  <b>Full-stack data toolkit for China A-shares — 11 layers · 54 endpoints · 19 sources · zero-auth</b>
-</p>
-
-<p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License"></a>
-  <img src="https://img.shields.io/badge/Python-3.9+-3776AB?logo=python&logoColor=white" alt="Python">
-  <a href="https://github.com/simonlin1212/a-stock-data/stargazers"><img src="https://img.shields.io/github/stars/simonlin1212/a-stock-data?style=social" alt="Stars"></a>
-  <br>
-  <img src="https://img.shields.io/badge/layers-11-2ea44f.svg" alt="Layers">
-  <img src="https://img.shields.io/badge/endpoints-54-2ea44f.svg" alt="Endpoints">
-  <img src="https://img.shields.io/badge/sources-19-2ea44f.svg" alt="Sources">
-  <img src="https://img.shields.io/badge/auth-zero-success.svg" alt="Zero Auth">
-</p>
-
-<p align="center">
-  <a href="#architecture">Architecture</a> ·
+  <a href="https://viberesearch.wiki">Website</a> ·
+  <a href="#screenshots">Screenshots</a> ·
+  <a href="#features">Features</a> ·
+  <a href="#data-sources">Data Sources</a> ·
   <a href="#quick-start">Quick Start</a> ·
-  <a href="#54-endpoints">Endpoints</a> ·
-  <a href="./CHANGELOG.md">Changelog</a>
+  <a href="#bring-your-own-ai">Bring Your Own AI</a> ·
+  <a href="#compliance">Compliance</a>
 </p>
 
-Full-stack data toolkit for China A-Share market — 11-layer architecture · 54 endpoints (51 primary + 3 official backups) · 19 data sources · direct HTTP calls except two TCP client libraries (mootdx / baostock)
-
-A self-contained Skill file that consolidates raw A-share data from 19 sources into a ready-to-use toolkit for AI coding assistants. No need to memorize mootdx candlestick parameters, Eastmoney PDF Referer headers, or iwencai X-Claw authentication — it's all handled. And when a primary source bans you, there's a backup-source quick reference to fall back on.
-
-> Compatible with [Claude Code](https://github.com/anthropics/claude-code) · [Codex](https://github.com/openai/codex) · [OpenClaw](https://github.com/anthropics/openclaw)
+> **Vibe-Research: Your Personal Trading Research Agent.**
 >
-> The Skill file is structured Markdown + embedded Python. Any AI coding assistant with context injection can use it.
+> An open dashboard for China A-share (plus US / HK): it wires up all the data and plugs into **your own AI / agent** — it never recommends a stock. You bring the model, it brings the data.
+
+Vibe-Research is an open-source research dashboard built primarily for **China A-share**, with US and HK markets included (A-share traders usually check overnight Wall Street and Hong Kong first, so the data is wired up too).
+
+It does not make decisions for you. It pulls together quotes, analyst reports, valuation, financials, filings, fund flows and news into one clean dashboard, then leaves an interface where **you plug in your own AI**. The direction and the conclusions come from the model or agent *you* configure.
+
+## Screenshots
+
+**Daily Review** — indices, market breadth, sector fund flows and turnover leaders on one screen, then hand it to your AI
+
+![Vibe-Research Daily Review](docs/screenshots/daily-review.png)
+
+<table>
+<tr>
+<td width="50%">
+
+**Stock Data** — earnings snapshot, valuation percentile and fund flows in one view
+
+![Stock Data](docs/screenshots/stock-detail.png)
+
+</td>
+<td width="50%">
+
+**News Radar** — 108 public feeds across 12 industry tracks, distilled on demand
+
+![News Radar](docs/screenshots/intel.png)
+
+</td>
+</tr>
+</table>
 
 ---
+
+## Features
+
+| Page | What's in it |
+|---|---|
+| 📊&nbsp;**Daily&nbsp;Review** | Index quotes · **Global markets** (Dow / S&P / Nasdaq overnight + Hang Seng / HS Tech) · Watchlist quotes · **Short-term sentiment** (consecutive limit-up ladder, seal rate, break rate, promotion rate) · **Market-wide turnover top 20** · Market breadth · Sector fund-flow trends · Sector rotation · One-click AI review |
+| 📡&nbsp;**News&nbsp;Radar** | 108 public RSS feeds across 12 tracks · AI-distilled "today's takeaways" · A-share filings and public news linked to your watchlist |
+| 🔍&nbsp;**Stock&nbsp;Data** | **A-share**: quotes · valuation matrix (forward PE / PEG) · **earnings snapshot** · valuation percentile vs. own 5-year history · key financials · analyst reports · filings · news · **fund flows** (margin trading, shareholder count, main-force flow, dividends, block trades) · top-list (Dragon-Tiger) · lockup expiry · sector membership · trending concepts · investor Q&A.<br>**US / HK / KR** (enter `AAPL` / `00700` / `005930.KS`): quotes · market cap · key financials (KR is quotes only) |
+| ⚔️&nbsp;**Bull&nbsp;vs&nbsp;Bear** | **Multi-agent**: the backend first pulls a 13-item factual dossier, then a **bull researcher** and a **bear researcher** argue from that same data (optional rebuttal round), and a **neutral moderator** summarizes "what both sides agree on / where they actually disagree / what to verify / what data is missing". **Deliberately produces no buy or sell conclusion.**<br>⏱ Heavier than a chat: ~100s and 3 model calls per round — see [cost](#-what-one-debate-costs-read-before-you-run-it) first |
+| ⭐&nbsp;**Watchlist** | **Paste a whole batch of tickers at once** (commas, spaces or newlines) · one-screen table (price, change, PE, PB, turnover) · **live quotes toggle** (top right, off by default; refreshes every 3s during trading hours, auto-pauses outside them and when the tab is hidden) · hand the whole list to your AI. Stored locally |
+| 🧩&nbsp;**Sectors** | Sector and value-chain skeletons |
+| 💼&nbsp;**Portfolio** | Enter cost and size, see live P&L · closed-position log (local only, never uploaded) |
+| 📄&nbsp;**My Reports** | Drag-and-drop your own research PDFs / Word / spreadsheets · auto-filed by industry from the filename · download or delete. **Stored in your local deploy directory only** |
+| 📝&nbsp;**Research Notes** | Save AI reviews, takeaways, Q&A and debates locally · **reflection audit**: have the AI audit its own reasoning — which claims are backed by data, which are speculation, where the weakest link is, and what to check next |
+| 🔌&nbsp;**Bring Your AI** | Subscription mode (local CLI, no API key) · API mode (any OpenAI-compatible endpoint) · MCP (mount into Claude Code and other agents) |
+
+> **Built-in analysis framework**: when your AI analyzes a stock it organizes findings across five dimensions — valuation, fund flows, earnings quality, industry cycle, catalysts and risks. The framework only prescribes *how to read the data*, never what to buy. The direction still comes from your own model.
+>
+> Limit-up lists and turnover rankings are **objective public data, presented as-is — no recommendation, no prediction**.
+
+## Data Sources
+
+Three public data toolkits are **vendored directly into this repo** — `git clone` and everything works, no extra downloads or wiring.
+
+### A-share full-stack data · AStockData
+
+- Lives in [`a-stock-data/`](a-stock-data/) (v3.7.1). Eleven data layers, 54 endpoints, and 19 sources, with fallback sources when a primary one gets blocked. [`a-stock-data/SKILL.md`](a-stock-data/SKILL.md) **embeds every call as runnable code** — self-contained; everything except the mootdx and baostock TCP clients calls source HTTP APIs directly, with built-in rate limiting for Eastmoney endpoints.
+- **Covers**: quotes / candles / analyst reports / consensus estimates / valuation / historical percentiles / financial statements / filings / Dragon-Tiger list / margin trading / block trades / shareholder counts / dividends / fund flows / lockup expiry / concept sectors / limit-up sentiment / ETF options / investor Q&A / market-wide industry rankings.
+- **For agents**: running this repo with Claude Code or similar? Point them at `SKILL.md` — every endpoint has copy-paste ready code. The backend data layer (`backend/astock.py`) is ported from it.
+- **Runtime deps**: `pip install mootdx requests pandas stockstats numpy baostock xlrd openpyxl`
+- **Upstream**: <https://github.com/simonlin1212/a-stock-data> — the vendored copy is a pinned snapshot and keeps working even if you never update it.
+
+### US / HK data · global-stock-data
+
+- Lives in [`global-stock-data/`](global-stock-data/) (v2.0.3). 13 data layers, 30+ endpoints, 11 sources, no auth required — quotes, candles, technicals, financial statements, fund flows, options (CBOE official chain with full Greeks and 0DTE flow), FINRA short volume, and the SEC EDGAR filing stream plus market-wide screener. Every source is labeled with its compliance tier.
+- `backend/gstock.py` ports the Eastmoney-domain subset: global indices (the "Global markets" row on Daily Review) plus US/HK quotes and key financials.
+- **Korean stocks**: append `.KS` to the 6-digit code (e.g. Samsung `005930.KS`). ⚠️ KR codes are also 6 digits like A-share tickers, so **the suffix is required** for correct routing. Quotes only, no financials. Taiwan is covered via US ADRs (e.g. `TSM`).
+- **Upstream**: <https://github.com/simonlin1212/global-stock-data>
+
+### Global news · investment-news
+
+- 108 public RSS feeds across 12 industry tracks, merged into `backend/newsradar.py`. Standard library only, no API keys.
+- **Upstream**: <https://github.com/simonlin1212/investment-news>
+
+> All data comes from public sources. Vibe-Research only performs objective data aggregation and presents public rankings as-is — **it does not recommend stocks, predict price moves, time trades, or assign subjective scores**. What you do with the data is up to you and your AI.
 
 ## Architecture
 
+One data layer, three AI outlets:
+
 ```
-China A-Share Full-Stack Data · 11-Layer Architecture · V3.7.1
-│  (Priority: prefer mootdx/Tencent — never IP-banned; Eastmoney only for exclusive data, with built-in throttling)
-├── Market Data    mootdx + Tencent + Baidu + Sina    Candlesticks (w/ MA5/10/20) + Order Book + PE/PB + Index/ETF
-│                                                     + adjust factors qfq/hfq  ★V3.7
-├── Research       Eastmoney + THS + iwencai          Stock reports / Industry reports / PDF / Consensus EPS / NL search
-├── Signals        THS + Eastmoney                    Hot stocks + Sector attribution + Northbound flow
-│                                                     + Sector membership + Fund flow(push2) + Dragon Tiger + Lockup + Industry + Board fund flow
-├── Capital Flow   Eastmoney datacenter + push2       Margin trading + Block trades + Holder count + Dividends + Fund flow(min+120d)
-│   / Chips     computed locally                  Chip distribution (CYQ): profit ratio / avg cost / cost range / peak  ★V3.7
-├── News           Eastmoney + Cailianpress           Stock news / CLS flash (✅revived in V3.4) / Global finance (mutual backup)
-├── Fundamentals   mootdx + Eastmoney + Sina          37-field quarterly + F10 9 categories + Financial statements
-│               + baostock + SW                  Valuation history (PE/PB/PS + turnover + ST) / listing & delisting / SW industry history  ★V3.7
-├── Filings        cninfo + mootdx                    Full filings across SSE / SZSE / BSE
-├── Limit-Up       Eastmoney push2ex + THS            ZT/ZB/DT/prev-ZT pools / limit reasons / consecutive-board ladder
-│                                                     + Watch list pool + Intraday price-anomaly pool  ★V3.6
-├── Options        Sina hq.sinajs                     ETF option T-quotes / Greeks / implied volatility  ★V3.3
-├── Sentiment      cninfo IRM + THS + Eastmoney       Investor Q&A / hot lists / popularity rank / concept hits  ★V3.3
-└── Macro          PBoC + NBS                     Social financing (monthly, 12 cols) / PMI (mfg · non-mfg · composite · by size)  ★V3.7
+Vibe-Research/
+├── a-stock-data/      A-share data toolkit (vendored v3.7.1, ready to use)
+├── global-stock-data/ US / HK data toolkit (vendored v2.0.3, ready to use)
+├── backend/           FastAPI :8900
+│   ├── astock.py        A-share data
+│   ├── gstock.py        US / HK data
+│   ├── newsradar.py     News radar
+│   ├── market.py        Market breadth + sector fund flows + global indices
+│   ├── portfolio.py     Portfolio (stored in your local user directory)
+│   ├── tools.py         AI tool layer (23 data tools, shared by chat / MCP / debate)
+│   ├── chat.py          In-app AI (OpenAI-compatible function calling)
+│   ├── debate.py        Bull-vs-bear orchestration (dossier → bull / bear / moderator)
+│   ├── reflection.py    Reflection audit (audits reasoning in existing analysis)
+│   └── mcp_server.py    MCP server (for Claude Code and other agents)
+└── frontend/          Vite + React 19 + TS + Tailwind :5899
 ```
 
-> ★V3.4 On top of the 11 layers there is now a **Backup Sources & Fallback Strategy** appendix: SSE/SZSE official + Sina + HKEX — official backup functions (dragon-tiger / fund flow / filings) + a per-layer fallback table for when a primary source bans you (see the corresponding SKILL.md section).
-
----
+**Tiered dependencies**: quotes (Tencent) and reports/filings (Eastmoney) work with a minimal install. `akshare` / `mootdx` are imported lazily — if missing, only those endpoints return 501 with an install hint; the service still runs.
 
 ## Quick Start
 
-**3 steps, 2 minutes.**
-
 ```bash
-# 1. Create skill directory
-mkdir -p ~/.claude/skills/a-stock-data
+# Backend (:8900)
+cd backend && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+.venv/bin/python -m uvicorn app:app --host 127.0.0.1 --port 8900
 
-# 2. Download SKILL.md
-curl -o ~/.claude/skills/a-stock-data/SKILL.md \
-  https://raw.githubusercontent.com/simonlin1212/a-stock-data/main/SKILL.md
-
-# 3. Install dependencies (V3.0: akshare no longer needed)
-pip install mootdx requests pandas stockstats numpy baostock xlrd openpyxl
+# Frontend (:5899)
+cd frontend && npm install && npm run dev
+# Open http://localhost:5899
 ```
 
-Launch Claude Code and say "Check the valuation of 688017" — the skill activates automatically.
+## Bring Your Own AI
 
-> **Codex / OpenClaw users:** Paste the contents of SKILL.md into your system prompt or project context file. The embedded Python code is ready to execute.
+Configure once on the "Bring your AI" page and every AI feature across the dashboard uses your model. **All analysis comes from your model — this project does not tune or bias it.** Three options:
 
----
+### 1. Subscription mode (uses a CLI you're already logged into — no API key)
 
-## 54 Endpoints
+Uses your existing subscription instead of paying per API call. Supported: **Claude Code · Codex · Qwen Code · DeepSeek CLI**.
 
-> **Counting convention:** the tables below have 55 rows but count as 54 endpoints — "Eastmoney Industry Reports" shares **the same endpoint** as "Eastmoney reportapi" (only the `qType` parameter differs) and "THS Northbound (historical)" is a local self-built cache (not a separate endpoint), so neither is counted; the single "EM Intraday Anomaly Pool" row covers **two** endpoints (`list` / `count`), adding one back. 55 − 1 − 1 + 1 = 54.
+- **Requirements**: the backend runs on your own machine, and the CLI is installed, logged in and on your `PATH`.
+- Pick one on the "Bring your AI" page — no key needed.
+- ⚠️ CLIs answer in one shot without multi-step tool calls, so this suits flows where the data is already prepared (daily review, takeaways, asking about the stock currently on screen). For open-ended questions where the AI should fetch data itself, use API mode.
 
-### Market Data (real-time, no IP ban)
+### 2. API mode (bring your own key)
 
-| Endpoint | Data |
-|----------|------|
-| mootdx Market Data | Candlesticks (multi-period) + Level-2 order book + tick-by-tick + 46-field quote |
-| Tencent Finance | PE(TTM) / PB / Market Cap / Float Cap / Turnover / Price Limits / Index / ETF |
-| **Baidu K-line** | Daily K-line + MA5/MA10/MA20 moving averages included (V3.0 new) |
-| **Sina Adjust Factors** | qfq / hfq factor series + applying them to unadjusted candles (V3.7 new) |
+Pick a model and the base URL is filled in for you — just paste the key. Built-in presets for **DeepSeek / Doubao / MiniMax / OpenAI / OpenRouter / Groq / Together / MiMo / any OpenAI-compatible endpoint**. This mode supports function calling, so the AI fetches quotes, valuation, reports and news on its own. Your key stays in your browser's local storage and is sent only to your own backend.
 
-### Research Reports
+### 3. MCP (for Claude Code and other agents)
 
-| Endpoint | Data |
-|----------|------|
-| Eastmoney reportapi | Single-stock report list + ratings + 3-year EPS forecasts |
-| Eastmoney Industry Reports | Industry report list (qType=1, same endpoint) + industry name/code + rating (V3.2.3) |
-| Eastmoney PDF | Full research report PDF, stock & industry (Referer auth handled) |
-| THS Consensus EPS | Institutional consensus EPS (direct basic.10jqka.com.cn) |
-| iwencai NL Search | Natural language cross-topic report search |
+Mount the backend as an MCP server so your agent can call Vibe-Research's data tools with its own subscription. See [`backend/README.md`](backend/README.md).
 
-### Signals
+## How the Multi-Agent Part Is Designed
 
-| Endpoint | Data |
-|----------|------|
-| THS Hot Stocks | Today's strong stocks + sector attribution tags (editorial annotations) |
-| THS Northbound (real-time) | Shanghai Connect minute-level flow (Shenzhen Connect unreliable since upstream disclosure tightening — see HKEX backup for authoritative data) |
-| THS Northbound (historical) | Local self-cached daily history |
-| Eastmoney Sector Membership | All sectors a stock belongs to (industry/concept/region mixed) + BK code + daily change + leading stock (V3.2.2, replaced Baidu PAE, one request) |
-| **Eastmoney Fund Flow** | Main / Large / Medium / Small / Super-large order minute-level net inflow (V3.1, replaced Baidu PAE) |
-| Dragon Tiger Board | Appearance records + Top 5 buy/sell brokerages + institutional activity |
-| Daily Dragon Tiger (Full Market) | All stocks on daily board + net buy ranking + appearance reasons |
-| Lockup Expiry Calendar | Historical releases + 90-day upcoming expiry alerts |
-| **Industry Ranking** | Eastmoney industry change/up/down counts (V3.0, replaced THS 401) |
-| **Board Fund Flow** | Industry/concept/region × today/5d/10d main net inflow & ratio + super-large/large/medium/small tiers + leading stock (V3.5, same endpoint as Industry Ranking) |
+Open-source multi-agent finance frameworks (TradingAgents, ai-hedge-fund and friends) end their pipeline with a trader or portfolio_manager role that outputs "buy / sell / how much". **This project deliberately omits that layer.**
 
-### Capital Flow / Ownership (V3.0 New)
+Here the endpoint of the multi-agent flow is **disagreement**, not a verdict:
 
-| Endpoint | Data |
-|----------|------|
-| **Margin Trading** | Daily margin balance / buy / repay + short selling balance |
-| **Block Trades** | Deal price/volume + buyer/seller brokerages + premium rate |
-| **Shareholder Count** | Quarterly holder count + QoQ change + avg shares per holder |
-| **Dividend History** | Per-share cash dividend / bonus shares / transfer shares |
-| **120-Day Fund Flow** | Main / large / medium / small order daily net inflow |
-| **Chip Distribution (CYQ)** | Profit ratio / average cost / 90-70 cost range & concentration / chip peak (computed locally, V3.7 new) |
+```
+① Factual dossier   backend pulls 13 objective datasets (no LLM involved)
+                     ↓  both sides argue over the same data — nobody can win by making numbers up
+② Bull researcher   builds the case: thesis + supporting evidence + what must hold for it to work
+③ Bear researcher   builds the counter-case: doubts + risk evidence + what must hold for it to work
+   (optional)       rebuttal round: address each point, concede what's conceded, refute with data
+④ Neutral moderator shared ground / real disagreements (missing data or differing reads?) /
+                     what to verify / what data is absent
+```
 
-### News
+Deliberate constraints:
 
-| Endpoint | Data |
-|----------|------|
-| Stock News | Eastmoney per-stock news (direct search-api-web) |
-| CLS Flash | Market-wide real-time flash (v1 API + local signature, zero key, ✅revived in V3.4.0, mutual backup with Global News) |
-| Global News | Eastmoney global finance news (direct np-weblist, 7×24) |
+- **Dossier first** — the model isn't left to remember which tool to call. Data is deterministic and reproducible; missing items are stated in the dossier with an explicit "do not speculate" instruction.
+- **Every claim must cite the specific data it rests on**; anything unsupported must be labeled as such.
+- **The moderator does not pick a winner** and gives no rating or lean — its output is "here's what to look at next".
+- Rate-limited endpoints are fetched **serially**: the throttle is timestamp-based rather than lock-based, so concurrency would blow straight through it.
 
-### Fundamentals + Filings
+### What one debate costs (read before you run it)
 
-| Endpoint | Data |
-|----------|------|
-| Quarterly Snapshot | 37 fields (EPS / ROE / Net Profit / Revenue...) |
-| F10 Company Data | 9 categories (truncation optimization, -70% tokens) |
-| Eastmoney Stock Info | Industry / total shares / float / market cap / listing date (direct push2) |
-| Sina Financial Statements | Balance sheet / Income statement / Cash flow (direct quotes.sina.cn) |
-| cninfo Filings | Full filings across all exchanges |
-| **Valuation History** | Daily PE/PB/PS/PCF + turnover + suspension + ST flag (back to 2016; **Beijing Exchange not supported**, V3.7 new) |
-| **Listing / Delisting Date** | ipoDate / outDate / status (only zero-auth source for delisting dates, V3.7 new) |
-| **SW Industry History** | Every industry reclassification per stock (removes look-ahead bias; codes only, no Chinese names, V3.7 new) |
+A debate is much heavier than a chat — it runs a full pipeline and **every role carries the complete dossier**. Measured:
 
-### Limit-Up / Limit-Down (V3.3 new)
-
-| Endpoint | Data |
-|----------|------|
-| EM Limit-Up Pool | Consecutive boards / N-day-M-board / seal fund / break count / seal time / industry |
-| EM Break-Board Pool | Opened after limit-up + amplitude / speed |
-| EM Limit-Down Pool | Seal fund / consecutive limit-down / open count / board turnover |
-| EM Prev-Day Limit-Up Pool | Yesterday's limit-up performance today (promotion rate / profit effect) |
-| THS Limit-Up Insight | Limit reason themes / seal success rate / board type / seal amount |
-| EM Watch List Pool | Exchange risk-warning / watch list + validity window (new in V3.6) |
-| EM Intraday Anomaly Pool | Severe price-anomaly detail + per-stock aggregated counts + all 12 anomaly rules decoded (new in V3.6) |
-
-### ETF Options (V3.3 new)
-
-| Endpoint | Data |
-|----------|------|
-| Option Contract List | 50ETF / 300ETF / STAR50 ETF / 500ETF call & put contracts by month |
-| T-Quote | Bid/ask 5 levels / open interest / strike / last / volume |
-| Greeks + IV | Delta / Gamma / Theta / Vega / implied vol / theoretical value (exchange-computed, no local BSM) |
-
-### Sentiment & Interaction (V3.3 new)
-
-| Endpoint | Data |
-|----------|------|
-| Investor Q&A (IRM) | Investor questions + official company replies (unique source: how a company responds to rumors/news) |
-| THS Hot List | Popularity / concept tags / rank change |
-| EM Popularity Rank | Rank + rank change + name/price |
-| EM Stock Concept Hits | Which concepts the market is grouping this stock under + heat |
-
-### Macro (V3.7 new)
-
-| Endpoint | Data |
-|----------|------|
-| **PBoC Social Financing** | Aggregate Financing to the Real Economy, monthly, 12 columns (RMB/entrusted/trust loans, undiscounted acceptances, corporate & government bonds, equity financing, ABS, write-offs) |
-| **NBS PMI** | Manufacturing / non-manufacturing / composite PMI + large / medium / small enterprise breakdown |
-
-### Backup Sources (V3.4 new · fallback when a primary source bans you)
-
-| Endpoint | Data |
-|----------|------|
-| Official Dragon-Tiger Backup | SSE + SZSE official APIs, zero-auth, authoritative first-party, incl. brokerage seats (when Eastmoney is banned) |
-| Fund Flow Backup | Sina daily 4-tier order net flow (super-large / large / medium / small + net inflow) |
-| Filings Backup | SZSE official for Shenzhen tickers, Eastmoney for Shanghai, both with direct PDF links (when cninfo is banned) |
-
-> Plus a **per-layer primary → independent-backup table** (exchange official / THS F10 / HKEX / cninfo webapi / Jin10 — all on different rate-limit planes) and a "confirmed dead" list — see the "Backup Sources & Fallback Strategy" section in SKILL.md.
-
-### Authentication
-
-All data sources except iwencai are **completely free, no API key needed** (including the V3.7 additions — baostock / SW Research / PBoC / NBS — all zero-registration). Only iwencai semantic search requires an API key ([apply here](https://www.iwencai.com/skillhub)).
-
----
-
-## Usage Examples
-
-Just tell your AI assistant:
-
-| Scenario | Prompt |
-|----------|--------|
-| Valuation | "Estimate 688017 — give me PE / PEG / payback period" |
-| Sector Attribution | "Which stocks are strong today and what sectors are driving them" |
-| Research Reports | "Latest reports on humanoid robot supply chain, especially ball screws and reducers" |
-| Northbound Flow | "How's northbound capital flow looking today" |
-| Concept Blocks | "What concept sectors does 688017 belong to" |
-| Fund Flow | "Is institutional money flowing into or out of 000858 today" |
-| Dragon Tiger Board | "Has 002475 appeared on the dragon tiger board recently, which brokerages are buying" |
-| Daily Dragon Tiger | "Which stocks had the highest net buy on today's dragon tiger board" |
-| Lockup Expiry | "Any lockup expiries coming up in the next 3 months for this stock" |
-| Industry Rotation | "Which industries are up the most today, where is money flowing" |
-| Margin Trading | "What's the recent trend in margin balance for 600519" |
-| Block Trades | "Any recent block trades for this stock, premium or discount" |
-| Shareholder Count | "Is 000858 shareholder count increasing or decreasing" |
-| Dividends | "How much has Moutai paid in dividends over the years" |
-| ETF Quote | "What's the price of 510050 (SSE 50 ETF) and today's change" |
-| Limit-Up Sentiment | "How many stocks hit limit-up today, highest consecutive boards, break rate" |
-| Limit-Up Themes | "What themes drove today's limit-ups, which are multi-day boards" |
-| Watch List Pool | "Which stocks are on the exchange watch list right now, and until when" |
-| Intraday Anomalies | "Which stocks had severe price anomalies today, and which rule did they trigger" |
-| Anomaly × Watch List | "Of today's anomaly stocks, which are already on the watch list" |
-| ETF Options | "What's the implied vol and Delta of the at-the-money 50ETF option" |
-| Investor Q&A | "What are investors asking BYD recently and how did the company respond" |
-| Market Heat | "Which stocks are hottest today and what concepts are they grouped under" |
-| News & Filings | "Pull recent news and filings for 300476" |
-| Market Flash | "Any big market news right now on the CLS flash feed" |
-| Batch Compare | "Compare valuations of these 5 semiconductor stocks" |
-| **Chip Distribution** | "How much of 600519 is in profit, where's the average cost and the chip peak" |
-| **Valuation History** | "What percentile is Moutai's PE over the past decade, and show turnover too" |
-| **ST / Suspension** | "When was 000004 flagged ST, and has it ever been suspended" |
-| **Industry Drift** | "Which SW industry was 000001 in back in 2016 — same as today?" |
-| **Macro Backdrop** | "What's the latest social financing and PMI — is liquidity loose or tight" |
-
-### 4 Built-in Research Workflows
-
-| Workflow | What it does | Time |
-|----------|-------------|------|
-| Single Stock Valuation | Live price → Consensus EPS → Forward PE / PEG / PE payback years | 30 sec |
-| Batch Comparison | Side-by-side valuation ranking | 1 min |
-| Thematic Research | iwencai multi-keyword NL search + Eastmoney PDF cross-reference | 2 min |
-| New Target Research | Coverage → Valuation → Concepts → Fund flow → Dragon tiger → Lockup → Margin | 1 min |
-
----
-
-
-## V3.7 Highlights
-
-**1 new data layer, 7 new endpoints, 4 new sources** (baostock / SW Research / PBoC / NBS — all zero-registration, zero-key). Every endpoint was run and verified on 2026-08-19.
-
-| Gap it closes | Endpoint | Verified |
+| | 1 round | 2 rounds (with rebuttal) |
 |---|---|---|
-| **"Chip layer" was a misnomer** — §4.1~4.5 were all capital-flow data, no actual chip distribution | Chip Distribution (CYQ) | Eastmoney has **no** public CYQ endpoint (`push2`/`push2his` both 404 in testing); computed locally from OHLC + turnover, zero new sources |
-| **Valuation was same-day snapshot only** | Valuation History | **2,581 rows** of daily PE/PB/PS/PCF for Moutai since 2016-01-04, plus turnover / suspension / ST (000004 shows 276 ST days) |
-| **K-line is unadjusted — cross-ex-div comparisons break** | Adjust Factors qfq/hfq | One HTTP call, ~1.8KB; ⚠️ **qfq divides, hfq multiplies** — wrong direction fails silently with wrong numbers |
-| **No way to get delisting dates** | Listing / Delisting | Only zero-auth source; lets you drop zombie tickers at the screening stage |
-| **Industry was current-only → look-ahead bias** | SW Industry History | **12,893 rows / 5,905 tickers / 38 level-1 industries**; Ping An Bank verified across 1991→2014→2021 |
-| **No macro layer at all** | Social Financing + PMI | Social financing monthly, 12 columns (2026-01 flow: 7,218.5bn CNY); PMI 2026-07 manufacturing 49.2 |
+| Model calls | **3** | **5** |
+| Input sent | ~35k CJK chars | ~60k |
+| Output | ~4k | ~7k |
+| Wall clock | **~100–120s** | ~3 min |
 
-> ⚠️ **New dependencies:** `numpy baostock xlrd openpyxl`. baostock is a TCP client library (no registration, no key)
-> and **does not support the Beijing Exchange** — codes starting 4/8/92/920 are rejected server-side, so this
-> toolkit blocks them before login and raises `ValueError`.
+Roughly 35s of that is fetching the dossier — a dozen public endpoints, **zero tokens**. The rest is generation.
 
----
+**To keep costs down:**
 
-## Data Source Priority (V3.2 re-ranked by IP-ban risk)
+1. **One round is usually enough.** Two rounds doubles everything.
+2. **Prefer subscription mode** (local CLI) over an API key.
+3. **A debate doesn't need an expensive model.** The data is already in the dossier; the model only organizes and expresses it. Save your budget for your own deep questions.
+4. **Don't spam it.** The dossier hits a dozen throttled endpoints.
 
-> **Principle: anything available from mootdx or Tencent (quotes / K-line / live price / market cap / financials) must use them first (never IP-banned). Eastmoney is only for its exclusive data, all routed through the throttled `em_get()`.**
+### Reflection audit
 
-| Priority | Source | Protocol | IP Ban Risk | Use |
-|----------|--------|----------|-------------|-----|
-| **1 (top)** | mootdx (TDX) | TCP 7709 | **Never banned** | K-line / order book / ticks / financials / F10 |
-| **2 (top)** | Tencent Finance | HTTP | **Never banned** | Live price / PE / PB / market cap / turnover / index / ETF |
-| 3 | THS Hot Stocks / Northbound | HTTP | Very low (zero auth) | Hot stocks / themes / northbound flow |
-| 4 | Baidu Finance | HTTP | Very low | K-line (w/ MA5/10/20) |
-| 5 | Sina Finance | HTTP | Low | Financial statements |
-| 6 | cninfo | HTTP | Low | Filings |
-| 7 | THS Consensus EPS | HTTP | Low (UA required) | Consensus EPS |
-| 8 | iwencai | OpenAPI | Low (key required) | NL semantic search |
-| 9 | **baostock** | TCP | Low (no registration) | Valuation history PE/PB/PS/PCF + turnover + suspension + ST + listing/delisting dates (**no Beijing Exchange**) |
-| 10 | **SW Research** | HTTP | Low (public XLS) | Industry classification history |
-| 11 | **PBoC** | HTTP | Low (official site) | Aggregate social financing |
-| 12 | **NBS** | HTTP | Low (official site) | PMI |
-| **last (exclusive only)** | **Eastmoney** datacenter/push2/reportapi/search/np-weblist | HTTP | **Medium — has rate-limit risk** | Dragon-tiger / lockup / margin / block trade / shareholders / dividends / fund flow / reports / news (all via `em_get()`) |
+The same idea applied to writing you already have: audit the reasoning and surface the parts that *sound* reasonable but aren't backed by anything. In testing it reliably catches things like "widely recognized by institutions" (generalizing from three data points) or "frequently raised estimates" (never quantified).
 
-> **Architecture:** Except mootdx and baostock (both TCP client libraries), all sources use direct HTTP API calls with no third-party data wrapper in between. **Eastmoney APIs are rate-limited; all calls go through `em_get()` for serial throttling. For batch jobs, increase `EM_MIN_INTERVAL`.**
->
-> **Fallback (V3.4 new):** When any primary source is banned or broken, check the "Backup Sources & Fallback Strategy" section in SKILL.md — every data category has an independent backup on a **different domain and rate-limit plane** (SSE/SZSE official / Sina / THS / HKEX), unaffected when Eastmoney bans you.
+Much cheaper — **a single model call** over the text you selected.
 
----
+## Tests
+
+```bash
+cd backend && .venv/bin/pip install -r requirements-dev.txt
+.venv/bin/pytest -m "not live"   # offline unit + API tests (fast, no network)
+.venv/bin/pytest -m live         # verifies live data source shapes (run before releases)
+```
 
 ## Changelog
 
-See [CHANGELOG.md](./CHANGELOG.md).
+See [CHANGELOG.md](./CHANGELOG.md). The single source of truth for the version is `frontend/package.json`; the backend API, the UI and the MCP `serverInfo` all read from it.
 
----
+## Compliance
+
+- Objective data aggregation and public-ranking display only: **no stock recommendations, no price predictions, no trade timing, no return promises, no subjective scoring.** Neutral by design.
+- Limit-up lists and turnover rankings are **objective public data** (the same numbers Eastmoney and Tonghuashun publish); the product displays them as-is with nothing attached.
+- All analytical direction comes from the AI *you* configure, not from this project. There are no buy/sell buttons in the UI, and valuation percentiles mark position only — no lines suggesting when to act.
+- **Your portfolio, watchlist, uploaded reports and API keys stay on your machine.** Nothing is uploaded; nothing enters the repo.
+- Portfolio and uploaded reports default to `~/.vibe-research/` (override with `VR_DATA_DIR` / `VR_REPORTS_DIR`) — outside the project folder, so re-downloading or overwriting the project never loses your data.
+
+## Related Projects
+
+All from the same open-source stack ([`simonlin1212`](https://github.com/simonlin1212)):
+
+| Repo | What it is |
+|---|---|
+| [**a-stock-data**](https://github.com/simonlin1212/a-stock-data) | A-share full-stack data toolkit (11 layers · 54 endpoints · 19 sources) — this project's A-share engine |
+| [**global-stock-data**](https://github.com/simonlin1212/global-stock-data) | US / HK full-stack data toolkit (13 layers · 30+ endpoints · 11 sources) |
+| [**investment-news**](https://github.com/simonlin1212/investment-news) | Global industry news dashboard (12 tracks mapped to A-share sectors) |
+| [**Agent-Staff**](https://github.com/simonlin1212/Agent-Staff) | Agentify a company: one AI agent per department plus a chief-of-staff |
+
+## Contact
+
+Built by **Simon**, independent developer.
+
+- 🐦 X: [@linsizhen](https://x.com/linsizhen)
+- ✉️ Email: <simonlin0423@gmail.com>
+- 💬 Happy to talk about **enterprise AI adoption**; for project issues please open an [Issue](https://github.com/simonlin1212/Vibe-Research/issues).
+
+## Acknowledgements
+
+- A-share data engine: [a-stock-data](https://github.com/simonlin1212/a-stock-data)
+- US / HK data engine: [global-stock-data](https://github.com/simonlin1212/global-stock-data)
+- News: [investment-news](https://github.com/simonlin1212/investment-news)
+- UI design language referenced with thanks: [HKUDS/Vibe-Trading](https://github.com/HKUDS/Vibe-Trading) (UI inspiration only; the implementation here is separate)
 
 ## Disclaimer
 
-This project provides data access tools only and does not constitute investment advice. Investing involves risk.
-
----
+This project is for learning and research purposes and **does not constitute investment advice**. The dashboard performs objective data aggregation and displays public rankings — it does not recommend stocks, predict price movements, time trades, or promise returns. All analytical conclusions come from the AI you configure yourself and have nothing to do with this project. Markets carry risk; verify independently and decide for yourself.
 
 ## Support
 
-If this tool saved you time, a coffee is appreciated ☕
+If this tool saved you time, a coffee is appreciated.
 
 <p align="center">
   <a href="https://buymeacoffee.com/simonlin1212"><img src="./assets/bmc-qr.png" width="180" alt="Buy Me a Coffee"></a>
 </p>
 
-> Need a data endpoint that isn't here? Open an [Issue](https://github.com/simonlin1212/a-stock-data/issues); sponsors' issues go first.
-
----
-
 ## License
 
-[Apache License 2.0](./LICENSE)
-
-**Author:** Simon Lin · X [@linsizhen](https://x.com/linsizhen) · Email: [simonlin0423@gmail.com](mailto:simonlin0423@gmail.com)
+MIT
