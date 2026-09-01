@@ -271,18 +271,44 @@ export interface HkCashflow {
 }
 
 // Market structure research: public persisted data only; no mock-data fallback.
-export interface CffexMemberSummary { long: number; short: number; long_change: number; short_change: number; net_position: number; signal: string }
+export interface CffexProductSummary { long: number; short: number; long_change: number; short_change: number; point_value: number | null }
+export interface CffexMemberSummary { long: number; short: number; long_change: number; short_change: number; net_position: number; signal: string; products?: Record<string, CffexProductSummary> }
 export interface CffexSummary { trade_date: string; members: Record<string, CffexMemberSummary>; rows: number; available: boolean; methodology?: string }
 export interface CffexPositionRow { trade_date: string; product: string; contract: string; member_name: string; rank_type: "long" | "short" | string; rank: number | null; position: number | null; change: number | null; source_url: string; fetched_at: string }
-export interface EtfShareRow { trade_date: string; code: string; name: string; category: string; shares: number; nav: number | null; close: number | null; estimated_assets: number | null; share_change: number | null; estimated_net_flow: number | null; source: string; fetched_at: string }
-export interface NationalTeamGroup { shares: number; share_change: number; estimated_net_flow: number; funds: number }
+export interface CffexWeeklyRow {
+  week_start: string; long: number; short: number; long_change: number;
+  short_change: number; net_position: number; rows?: number; snapshot_date?: string; trading_days?: number;
+}
+export interface CffexSourceRow {
+  trade_date: string; product: string; source_url: string; fetched_at: string;
+  source_hash: string; content_type: string; row_count: number;
+  status: "ok" | "error" | string; error: string;
+}
+export interface CffexForecastObservation {
+  signal_date: string; next_date: string; signal: "多" | "空" | "中性" | string;
+  next_direction: "涨" | "跌" | "平" | string; correct: boolean | null;
+}
+export interface CffexForecast {
+  observations: CffexForecastObservation[]; evaluated: number; correct: number;
+  success_rate: number | null; available: boolean; methodology: string;
+}
+export interface EtfShareRow { trade_date: string; code: string; name: string; category: string; shares: number; nav: number | null; close: number | null; estimated_assets: number | null; share_change: number | null; estimated_net_flow: number | null; source: string; fetched_at: string; source_hash?: string; status?: string; error?: string }
+export interface EtfCategoryHistoryRow { trade_date: string; category: string; value: number; source: string; fetched_at: string; source_hash: string; status: string; error?: string }
+export interface NationalTeamGroup { shares: number; share_change: number; estimated_net_flow: number; funds: number; buy_share?: number; sell_share?: number; buy_ratio?: number | null; sell_ratio?: number | null; positive_change?: number; negative_change?: number }
 export interface NationalTeamSummary { trade_date: string; groups: Record<string, NationalTeamGroup>; proxy: true; disclaimer: string }
+export interface NationalTeamHistoryRow { trade_date: string; groups: Record<string, NationalTeamGroup>; proxy: true }
 export const api = {
-  cffexSync: (tradeDate?: string) => request<{ trade_date: string; rows: number; source: string; stored: boolean }>("/market-structure/cffex/sync" + (tradeDate ? "?trade_date=" + encodeURIComponent(tradeDate) : ""), "POST"),
+  cffexSync: (tradeDate?: string) => request<{ trade_date: string; rows: number; products: string[]; sources: Array<{ product: string; url: string; sha256: string; status: string; rows: number }>; stored: boolean; partial: boolean; errors: string[] }>("/market-structure/cffex/sync" + (tradeDate ? "?trade_date=" + encodeURIComponent(tradeDate) : ""), "POST"),
   cffexSummary: (tradeDate?: string) => get<CffexSummary>("/market-structure/cffex/summary" + (tradeDate ? "?trade_date=" + encodeURIComponent(tradeDate) : "")),
-  cffexHistory: (start?: string, end?: string, member?: string) => get<CffexPositionRow[]>("/market-structure/cffex/history?" + new URLSearchParams({ ...(start ? { start } : {}), ...(end ? { end } : {}), ...(member ? { member } : {}) }).toString()),
-  etfSync: (tradeDate?: string) => request<{ trade_date: string; rows: number; source: string; stored: boolean }>("/market-structure/etf/sync" + (tradeDate ? "?trade_date=" + encodeURIComponent(tradeDate) : ""), "POST"),  etfHistory: (start?: string, end?: string, category?: string) => get<EtfShareRow[]>("/market-structure/etf/history?" + new URLSearchParams({ ...(start ? { start } : {}), ...(end ? { end } : {}), ...(category ? { category } : {}) }).toString()),
-  nationalTeamSummary: (tradeDate?: string) => get<NationalTeamSummary>("/market-structure/national-team/summary" + (tradeDate ? "?trade_date=" + encodeURIComponent(tradeDate) : "")),  nationalTeamHistory: (start?: string, end?: string) => get<Array<{ trade_date: string; groups: Record<string, NationalTeamGroup>; proxy: true }>>("/market-structure/national-team/history?" + new URLSearchParams({ ...(start ? { start } : {}), ...(end ? { end } : {}) }).toString()),
+  cffexHistory: (start?: string, end?: string, member?: string, product?: string) => get<CffexPositionRow[]>("/market-structure/cffex/history?" + new URLSearchParams({ ...(start ? { start } : {}), ...(end ? { end } : {}), ...(member ? { member } : {}), ...(product ? { product } : {}) }).toString()),
+  cffexWeekly: (start?: string, end?: string, member?: string, product?: string) => get<CffexWeeklyRow[]>("/market-structure/cffex/weekly?" + new URLSearchParams({ ...(start ? { start } : {}), ...(end ? { end } : {}), ...(member ? { member } : {}), ...(product ? { product } : {}) }).toString()),
+  cffexSources: (start?: string, end?: string) => get<CffexSourceRow[]>("/market-structure/cffex/sources?" + new URLSearchParams({ ...(start ? { start } : {}), ...(end ? { end } : {}) }).toString()),
+  cffexForecast: (start?: string, end?: string) => get<CffexForecast>("/market-structure/cffex/forecast?" + new URLSearchParams({ ...(start ? { start } : {}), ...(end ? { end } : {}) }).toString()),
+  etfSync: (tradeDate?: string) => request<{ trade_date: string; rows: number; source: string; sha256?: string; stored: boolean }>("/market-structure/etf/sync" + (tradeDate ? "?trade_date=" + encodeURIComponent(tradeDate) : ""), "POST"),
+  etfCategoriesSync: () => request<{ rows: number; source: string; sha256: string; stored: boolean }>("/market-structure/etf/categories/sync", "POST"),
+  etfCategoriesHistory: (start?: string, end?: string, category?: string) => get<EtfCategoryHistoryRow[]>("/market-structure/etf/categories/history?" + new URLSearchParams({ ...(start ? { start } : {}), ...(end ? { end } : {}), ...(category ? { category } : {}) }).toString()),
+  etfHistory: (start?: string, end?: string, category?: string) => get<EtfShareRow[]>("/market-structure/etf/history?" + new URLSearchParams({ ...(start ? { start } : {}), ...(end ? { end } : {}), ...(category ? { category } : {}) }).toString()),
+  nationalTeamSummary: (tradeDate?: string) => get<NationalTeamSummary>("/market-structure/national-team/summary" + (tradeDate ? "?trade_date=" + encodeURIComponent(tradeDate) : "")),  nationalTeamHistory: (start?: string, end?: string) => get<NationalTeamHistoryRow[]>("/market-structure/national-team/history?" + new URLSearchParams({ ...(start ? { start } : {}), ...(end ? { end } : {}) }).toString()),
   health: () => get<{ ok: boolean }>("/health"),
   indices: () => get<IndexQuote[]>("/indices"),
   marketOverview: () => get<MarketOverview>("/market/overview"),
