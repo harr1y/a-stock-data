@@ -273,8 +273,11 @@ export interface HkCashflow {
 // Market structure research: public persisted data only; no mock-data fallback.
 export interface CffexProductSummary { long: number; short: number; long_change: number; short_change: number; point_value: number | null }
 export interface CffexMemberSummary { long: number; short: number; long_change: number; short_change: number; net_position: number; signal: string; products?: Record<string, CffexProductSummary> }
-export interface CffexSummary { trade_date: string; members: Record<string, CffexMemberSummary>; rows: number; available: boolean; methodology?: string }
+export interface CffexAggregate { long_hands: number; short_hands: number; long_change_hands: number; short_change_hands: number; net_position: number; net_change: number; member_count: number; signal?: string; scope?: string; products?: Record<string, unknown> }
+export interface CffexStrategy { label: string; bias: string; rationale: string; citic_note?: string; confidence?: string; action?: string }
+export interface CffexSummary { trade_date: string; members: Record<string, CffexMemberSummary>; aggregate?: CffexAggregate; citic?: CffexAggregate; strategy?: CffexStrategy; rows: number; available: boolean; methodology?: string }
 export interface CffexPositionRow { trade_date: string; product: string; contract: string; member_name: string; rank_type: "long" | "short" | string; rank: number | null; position: number | null; change: number | null; source_url: string; fetched_at: string }
+export interface CffexWeeklySummaryRow { week_start: string; snapshot_date: string; trading_days: number; aggregate: CffexAggregate; citic: CffexAggregate; strategy: CffexStrategy; daily: Array<{ trade_date: string; aggregate: CffexAggregate; citic: CffexAggregate; strategy: CffexStrategy; rows: number }> }
 export interface CffexWeeklyRow {
   week_start: string; long: number; short: number; long_change: number;
   short_change: number; net_position: number; rows?: number; snapshot_date?: string; trading_days?: number;
@@ -304,6 +307,8 @@ export const api = {
   cffexWeekly: (start?: string, end?: string, member?: string, product?: string) => get<CffexWeeklyRow[]>("/market-structure/cffex/weekly?" + new URLSearchParams({ ...(start ? { start } : {}), ...(end ? { end } : {}), ...(member ? { member } : {}), ...(product ? { product } : {}) }).toString()),
   cffexSources: (start?: string, end?: string) => get<CffexSourceRow[]>("/market-structure/cffex/sources?" + new URLSearchParams({ ...(start ? { start } : {}), ...(end ? { end } : {}) }).toString()),
   cffexForecast: (start?: string, end?: string) => get<CffexForecast>("/market-structure/cffex/forecast?" + new URLSearchParams({ ...(start ? { start } : {}), ...(end ? { end } : {}) }).toString()),
+  cffexAggregateHistory: (start?: string, end?: string) => get<Array<{ trade_date: string; aggregate: CffexAggregate; citic: CffexAggregate; strategy: CffexStrategy; rows: number }>>("/market-structure/cffex/aggregate-history?" + new URLSearchParams({ ...(start ? { start } : {}), ...(end ? { end } : {}) }).toString()),
+  cffexWeeklySummary: (start?: string, end?: string) => get<CffexWeeklySummaryRow[]>("/market-structure/cffex/weekly-summary?" + new URLSearchParams({ ...(start ? { start } : {}), ...(end ? { end } : {}) }).toString()),
   etfSync: (tradeDate?: string) => request<{ trade_date: string; rows: number; source: string; sha256?: string; stored: boolean }>("/market-structure/etf/sync" + (tradeDate ? "?trade_date=" + encodeURIComponent(tradeDate) : ""), "POST"),
   etfCategoriesSync: () => request<{ rows: number; source: string; sha256: string; stored: boolean }>("/market-structure/etf/categories/sync", "POST"),
   etfCategoriesHistory: (start?: string, end?: string, category?: string) => get<EtfCategoryHistoryRow[]>("/market-structure/etf/categories/history?" + new URLSearchParams({ ...(start ? { start } : {}), ...(end ? { end } : {}), ...(category ? { category } : {}) }).toString()),

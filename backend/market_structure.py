@@ -224,6 +224,40 @@ def _member_summary(rows):
     return members
 
 
+def _rget(row, key, default=None):
+    try:
+        return row[key]
+    except (KeyError, IndexError):
+        return default
+
+
+def _aggregate_summary(rows, member_pattern=None):
+    selected=[r for r in rows if not member_pattern or member_pattern.search(str(_rget(r, "member_name", "")))]
+    t={"long_hands":0.0,"short_hands":0.0,"long_change_hands":0.0,"short_change_hands":0.0}; members=set(); products={}
+    for r in selected:
+        typ=_rget(r,"rank_type"); pos=float(_rget(r,"position") or 0); chg=float(_rget(r,"change") or 0); member=str(_rget(r,"member_name","")); product=str(_rget(r,"product","")); members.add(member)
+        q=products.setdefault(product,{"long_hands":0,"short_hands":0,"long_change_hands":0,"short_change_hands":0})
+        if typ=="long": t["long_hands"]+=pos; t["long_change_hands"]+=chg; q["long_hands"]+=pos; q["long_change_hands"]+=chg
+        elif typ=="short": t["short_hands"]+=pos; t["short_change_hands"]+=chg; q["short_hands"]+=pos; q["short_change_hands"]+=chg
+    t.update({"scope":"visible_members","member_count":len(members),"members":sorted(members),"net_position":t["long_hands"]-t["short_hands"],"net_change":t["long_change_hands"]-t["short_change_hands"],"products":products})
+    for k in ("long_hands","short_hands","long_change_hands","short_change_hands","net_position","net_change"): t[k]=int(t[k])
+    return t
+
+
+def _strategy(aggregate, citic):
+    lo=aggregate["long_change_hands"]; sh=aggregate["short_change_hands"]; m=max(abs(lo),abs(sh))
+    if not m: label,bias,why="观望","neutral","公开排名样本的多空持仓变化均为零或缺失。"
+    elif lo>0 and sh>0 and abs(lo-sh)<=m*.2: label,bias,why="套利/对冲","hedge","多空同时增仓且变化接近，优先视为套利/对冲代理。"
+    elif lo>0 and sh>0:
+        if lo > sh: label,bias,why="偏多","bullish","多空同时增仓，但多头增仓明显占优。"
+        elif sh > lo: label,bias,why="偏空","bearish","多空同时增仓，但空头增仓明显占优。"
+        else: label,bias,why="套利/对冲","hedge","多空同时等量增仓，优先视为套利/对冲代理。"
+    elif lo > 0 and (sh <= 0 or lo > sh * 1.2): label,bias,why="偏多","bullish","多单增仓明显大于空单，公开排名样本偏多。"
+    elif sh > 0 and (lo <= 0 or sh > lo * 1.2): label,bias,why="偏空","bearish","空单增仓明显大于多单，公开排名样本偏空。"
+    else: label,bias,why="观望","neutral","多空同时减仓或方向变化不一致，方向信号不足。"
+    return {"label":label,"bias":bias,"rationale":why,"citic_note":f"中信相关会员多单变化 {citic['long_change_hands']} 手、空单变化 {citic['short_change_hands']} 手。" if citic["member_count"] else "","confidence":"低","action":"结合上证指数与基差确认后再决定方向"}
+
+
 def _read_positions(d):
     with _db() as db:
         return db.execute("SELECT * FROM cffex_positions WHERE trade_date=?", (d,)).fetchall()
@@ -240,8 +274,43 @@ def cffex_sync(trade_date: str | None = Query(None)):
 @router.get("/cffex/summary")
 def cffex_summary(trade_date: str | None = Query(None)):
     d = _day(trade_date); rows = _read_positions(d)
-    return {"data": {"trade_date": d, "members": _member_summary(rows), "rows": len(rows), "available": bool(rows),
-                      "methodology": "会员排名是期货公司席位客户汇总，不代表期货公司自营或真实主体意图；跨品种同时保留手数与净敞口，名义金额按 IF/IH=300、IC/IM=200 元/点换算需有价格数据。"}}
+    aggregate = _aggregate_summary(rows); citic = _aggregate_summary(rows, re.compile(r"中信"))
+    return {"data": {"trade_date": d, "members": _member_summary(rows), "aggregate": aggregate, "citic": citic,
+                      "strategy": _strategy(aggregate, citic), "rows": len(rows), "available": bool(rows),
+                      "methodology": "多空手数为官方排名文件中全部可见会员/合约行的汇总；中信为会员名称含中信的可见行。会员排名是期货公司席位客户汇总，不代表期货公司自营或真实主体意图；这不是全市场客户普查，也不把持仓手数等同资金流。"}}
+
+
+def _aggregate_history(rows):
+    dates = sorted({str(_rget(r, "trade_date")) for r in rows}); out = []
+    for d in dates:
+        day_rows = [r for r in rows if str(_rget(r, "trade_date")) == d]
+        aggregate = _aggregate_summary(day_rows); citic = _aggregate_summary(day_rows, re.compile(r"中信"))
+        out.append({"trade_date": d, "aggregate": aggregate, "citic": citic, "strategy": _strategy(aggregate, citic), "rows": len(day_rows)})
+    return out
+
+
+@router.get("/cffex/aggregate-history")
+def cffex_aggregate_history(start: str | None = Query(None), end: str | None = Query(None)):
+    with _db() as db:
+        rows = db.execute("SELECT * FROM cffex_positions WHERE trade_date BETWEEN ? AND ? ORDER BY trade_date", (start or "1900-01-01", end or "9999-12-31")).fetchall()
+    data = _aggregate_history(rows)
+    return {"data": data, "available": bool(data), "methodology": "按已留存交易日重新汇总，缺失交易日不补零；历史留存来自官方文件抓取结果。"}
+
+
+@router.get("/cffex/weekly-summary")
+def cffex_weekly_summary(start: str | None = Query(None), end: str | None = Query(None)):
+    with _db() as db:
+        rows = db.execute("SELECT * FROM cffex_positions WHERE trade_date BETWEEN ? AND ? ORDER BY trade_date", (start or "1900-01-01", end or "9999-12-31")).fetchall()
+    daily = _aggregate_history(rows); buckets = {}
+    for item in daily:
+        dt = datetime.strptime(item["trade_date"], "%Y-%m-%d").date(); key = (dt - timedelta(days=dt.weekday())).isoformat()
+        b = buckets.setdefault(key, {"week_start": key, "snapshot_date": item["trade_date"], "daily": []}); b["daily"].append(item)
+        if item["trade_date"] > b["snapshot_date"]: b["snapshot_date"] = item["trade_date"]
+    out = []
+    for b in buckets.values():
+        snap = next(x for x in b["daily"] if x["trade_date"] == b["snapshot_date"])
+        out.append({"week_start": b["week_start"], "snapshot_date": b["snapshot_date"], "trading_days": len(b["daily"]), "aggregate": snap["aggregate"], "citic": snap["citic"], "strategy": snap["strategy"], "daily": b["daily"]})
+    return {"data": sorted(out, key=lambda x: x["week_start"]), "available": bool(out), "methodology": "每周保留最后一个已抓取交易日快照，同时返回该周每日汇总；不把缺失交易日当作零。"}
 
 
 @router.get("/cffex/history")
@@ -280,6 +349,8 @@ def _weekly(rows):
             bucket[typ + "_change"] += row["change"] or 0
         bucket["trading_days"] = len(bucket["trading_days"])
         bucket["net_position"] = bucket["long"] - bucket["short"]
+        bucket["net_change"] = bucket["long_change"] - bucket["short_change"]
+        bucket["signal"] = ("套利/对冲" if bucket["long_change"] > 0 and bucket["short_change"] > 0 else "偏多" if bucket["net_change"] > 0 else "偏空" if bucket["net_change"] < 0 else "观望")
     return sorted(buckets.values(), key=lambda x: x["week_start"])
 
 

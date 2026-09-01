@@ -56,3 +56,19 @@ def test_etf_flow_chart_parser_rejects_non_html_and_reads_c1():
     html = '<html><script>var CHARTS = [{"name":"宽基市场","_c1":[["2026-08-29",12.5],["2026-08-30",13.0]]}];</script></html>'
     rows = m._extract_etf_flow_charts(html)
     assert rows[0] == ("2026-08-29", "宽基市场", 12.5)
+
+
+def test_cffex_aggregate_and_citic_strategy():
+    import sys
+    sys.path.insert(0, str(Path(__file__).parents[1]))
+    import market_structure as m
+    rows = [
+        {"trade_date":"2026-08-31", "member_name":"中信期货", "product":"IF", "rank_type":"long", "position":100, "change":20},
+        {"trade_date":"2026-08-31", "member_name":"中信期货", "product":"IF", "rank_type":"short", "position":70, "change":5},
+        {"trade_date":"2026-08-31", "member_name":"其他机构", "product":"IH", "rank_type":"long", "position":30, "change":-2},
+    ]
+    all_rows=m._aggregate_summary(rows); citic=m._aggregate_summary(rows, __import__('re').compile(r"中信"))
+    assert all_rows["long_hands"] == 130 and all_rows["short_hands"] == 70
+    assert all_rows["long_change_hands"] == 18 and all_rows["short_change_hands"] == 5
+    assert citic["long_hands"] == 100 and citic["short_hands"] == 70
+    assert m._strategy(all_rows, citic)["label"] == "偏多"
