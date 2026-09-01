@@ -274,7 +274,7 @@ export interface HkCashflow {
 export interface CffexProductSummary { long: number; short: number; long_change: number; short_change: number; point_value: number | null }
 export interface CffexMemberSummary { long: number; short: number; long_change: number; short_change: number; net_position: number; signal: string; products?: Record<string, CffexProductSummary> }
 export interface CffexAggregate { long_hands: number; short_hands: number; long_change_hands: number; short_change_hands: number; net_position: number; net_change: number; member_count: number; signal?: string; scope?: string; products?: Record<string, unknown> }
-export interface CffexStrategy { label: string; bias: string; rationale: string; citic_note?: string; confidence?: string; action?: string }
+export interface CffexStrategy { label: string; bias: string; forecast_label?: string; forecast_bias?: string; rationale: string; citic_note?: string; confidence?: string; action?: string }
 export interface CffexSummary { trade_date: string; members: Record<string, CffexMemberSummary>; aggregate?: CffexAggregate; citic?: CffexAggregate; strategy?: CffexStrategy; rows: number; available: boolean; methodology?: string }
 export interface CffexPositionRow { trade_date: string; product: string; contract: string; member_name: string; rank_type: "long" | "short" | string; rank: number | null; position: number | null; change: number | null; source_url: string; fetched_at: string }
 export interface CffexWeeklySummaryRow { week_start: string; snapshot_date: string; trading_days: number; aggregate: CffexAggregate; citic: CffexAggregate; strategy: CffexStrategy; daily: Array<{ trade_date: string; aggregate: CffexAggregate; citic: CffexAggregate; strategy: CffexStrategy; rows: number }> }

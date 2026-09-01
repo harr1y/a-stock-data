@@ -16,10 +16,10 @@ import { version as PKG_VERSION } from "../../../package.json";
 
 // 版本号只从 package.json 读，不再各处写死（发 v0.3.0 时三处忘改停在 v0.2.2，#20）
 const APP_VERSION = `v${PKG_VERSION}`;
-const REPO_URL = "https://github.com/simonlin1212/Vibe-Research";
+const REPO_URL = "https://github.com/harr1y/a-stock-data";
 // 作者联系方式
-const X_URL = "https://x.com/linsizhen";
-const MAIL_URL = "mailto:simonlin0423@gmail.com";
+const X_URL = "#";
+const MAIL_URL = "mailto:admin";
 
 const NAV = [
   { to: "/daily-review", icon: Activity, label: "每日复盘" },

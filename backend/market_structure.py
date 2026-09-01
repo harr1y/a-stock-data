@@ -245,17 +245,20 @@ def _aggregate_summary(rows, member_pattern=None):
 
 
 def _strategy(aggregate, citic):
-    lo=aggregate["long_change_hands"]; sh=aggregate["short_change_hands"]; m=max(abs(lo),abs(sh))
-    if not m: label,bias,why="观望","neutral","公开排名样本的多空持仓变化均为零或缺失。"
-    elif lo>0 and sh>0 and abs(lo-sh)<=m*.2: label,bias,why="套利/对冲","hedge","多空同时增仓且变化接近，优先视为套利/对冲代理。"
-    elif lo>0 and sh>0:
-        if lo > sh: label,bias,why="偏多","bullish","多空同时增仓，但多头增仓明显占优。"
-        elif sh > lo: label,bias,why="偏空","bearish","多空同时增仓，但空头增仓明显占优。"
-        else: label,bias,why="套利/对冲","hedge","多空同时等量增仓，优先视为套利/对冲代理。"
-    elif lo > 0 and (sh <= 0 or lo > sh * 1.2): label,bias,why="偏多","bullish","多单增仓明显大于空单，公开排名样本偏多。"
-    elif sh > 0 and (lo <= 0 or sh > lo * 1.2): label,bias,why="偏空","bearish","空单增仓明显大于多单，公开排名样本偏空。"
-    else: label,bias,why="观望","neutral","多空同时减仓或方向变化不一致，方向信号不足。"
-    return {"label":label,"bias":bias,"rationale":why,"citic_note":f"中信相关会员多单变化 {citic['long_change_hands']} 手、空单变化 {citic['short_change_hands']} 手。" if citic["member_count"] else "","confidence":"低","action":"结合上证指数与基差确认后再决定方向"}
+    # 用户定义的经验规则：常规解释按持仓占优方向；A 股 T+1 预测采用反向映射。
+    # CFFEX 会员排名是席位客户汇总，不能据此断言期货公司的自营方向。
+    long_hands = aggregate["long_hands"]
+    short_hands = aggregate["short_hands"]
+    total = long_hands + short_hands
+    margin = max(total * 0.05, 1)
+    if total <= 0 or abs(long_hands - short_hands) <= margin:
+        label, conventional_bias, forecast_label, forecast_bias, why = ("对冲/中性", "neutral", "次日中性", "neutral", "多空持仓接近，按用户规则视为对冲行为，不作多空方向预测。")
+    elif short_hands > long_hands:
+        label, conventional_bias, forecast_label, forecast_bias, why = ("偏空", "bearish", "次日偏多", "bullish", "空单手数占优；常规解读偏空，但按 A 股历史经验对次日上证采用反向看多。")
+    else:
+        label, conventional_bias, forecast_label, forecast_bias, why = ("偏多", "bullish", "次日偏空", "bearish", "多单手数占优；常规解读偏多，但按 A 股历史经验对次日上证采用反向看空。")
+    citic_note = f"中信期货公开会员行：多单变化 {citic['long_change_hands']} 手、空单变化 {citic['short_change_hands']} 手。" if citic["member_count"] else ""
+    return {"label": label, "bias": conventional_bias, "forecast_label": forecast_label, "forecast_bias": forecast_bias, "rationale": why, "citic_note": citic_note, "confidence": "低", "action": "用下一交易日上证指数实际涨跌验证；同时结合基差与上证同步确认"}
 
 
 def _read_positions(d):
@@ -274,7 +277,7 @@ def cffex_sync(trade_date: str | None = Query(None)):
 @router.get("/cffex/summary")
 def cffex_summary(trade_date: str | None = Query(None)):
     d = _day(trade_date); rows = _read_positions(d)
-    aggregate = _aggregate_summary(rows); citic = _aggregate_summary(rows, re.compile(r"中信"))
+    aggregate = _aggregate_summary(rows); citic = _aggregate_summary(rows, re.compile(r"中信期货"))
     return {"data": {"trade_date": d, "members": _member_summary(rows), "aggregate": aggregate, "citic": citic,
                       "strategy": _strategy(aggregate, citic), "rows": len(rows), "available": bool(rows),
                       "methodology": "多空手数为官方排名文件中全部可见会员/合约行的汇总；中信为会员名称含中信的可见行。会员排名是期货公司席位客户汇总，不代表期货公司自营或真实主体意图；这不是全市场客户普查，也不把持仓手数等同资金流。"}}
@@ -284,7 +287,7 @@ def _aggregate_history(rows):
     dates = sorted({str(_rget(r, "trade_date")) for r in rows}); out = []
     for d in dates:
         day_rows = [r for r in rows if str(_rget(r, "trade_date")) == d]
-        aggregate = _aggregate_summary(day_rows); citic = _aggregate_summary(day_rows, re.compile(r"中信"))
+        aggregate = _aggregate_summary(day_rows); citic = _aggregate_summary(day_rows, re.compile(r"中信期货"))
         out.append({"trade_date": d, "aggregate": aggregate, "citic": citic, "strategy": _strategy(aggregate, citic), "rows": len(day_rows)})
     return out
 
@@ -388,7 +391,10 @@ def _forecast(rows, index_rows):
         by_cffex.setdefault(r["trade_date"], {"long_change": 0, "short_change": 0})[r["rank_type"] + "_change"] += r["change"] or 0
     for i, d in enumerate(dates[:-1]):
         if d not in by_cffex: continue
-        nxt = dates[i + 1]; x = by_cffex[d]; signal = "多" if x["long_change"] > x["short_change"] else "空" if x["short_change"] > x["long_change"] else "中性"
+        nxt = dates[i + 1]
+        x = by_cffex[d]
+        # 用户经验规则用于 T+1：空单占优=>次日看多，多单占优=>次日看空；接近=>中性。
+        signal = "多" if x["short_change"] > x["long_change"] else "空" if x["long_change"] > x["short_change"] else "中性"
         actual = "涨" if by_date[nxt] > by_date[d] else "跌" if by_date[nxt] < by_date[d] else "平"
         hit = (signal == "多" and actual == "涨") or (signal == "空" and actual == "跌")
         if signal != "中性": evaluated += 1; correct += int(hit)
