@@ -31,7 +31,6 @@ export function authHeaders(): Record<string, string> {
   const k = loadAccessKey();
   return k ? { Authorization: `Bearer ${k}` } : {};
 }
-
 export interface MyReport {
   id: string; name: string; industry: string; size: number; ext: string; ts: number;
 }
@@ -87,7 +86,6 @@ export interface Quote {
   pe_ttm: number; pb: number; mcap_yi: number; turnover_pct: number;
   limit_up: number; limit_down: number;
 }
-
 export interface Valuation {
   name: string; code: string; price: number; mcap_yi: number;
   pe_ttm: number; pb: number;
@@ -95,12 +93,10 @@ export interface Valuation {
   cagr_pct: number | null; peg: number | null; digest_years: number | null;
   analyst_count: number; forecast_note?: string;
 }
-
 export interface Report {
   title: string; publishDate: string; orgSName: string;
   emRatingName?: string; indvInduName?: string; pdfUrl?: string | null;
 }
-
 export interface ValMetric {
   current: number; percentile: number; min: number; max: number;
   p20: number; p50: number; p80: number; n: number;
@@ -108,11 +104,9 @@ export interface ValMetric {
 export interface ValPercentile {
   period: string; metrics: { pe_ttm?: ValMetric; pb?: ValMetric };
 }
-
 export interface Announcement {
   date: string; title: string; type: string; url: string;
 }
-
 export interface Financials {
   period: string | null;
   revenue: string | null; revenue_yoy: string | null;
@@ -120,15 +114,12 @@ export interface Financials {
   eps: string | null; bvps: string | null; roe: string | null;
   gross_margin: string | null; net_margin: string | null; op_cf_ps: string | null;
 }
-
 export interface NewsItem {
   新闻标题?: string; 发布时间?: string; 文章来源?: string; 新闻链接?: string;
 }
-
 export interface IndexQuote {
   name: string; price: number; change_pct: number; change_amt: number;
 }
-
 export interface MarketSentiment {
   up: number; down: number; flat: number; zt: number; zt_real: number; dt: number; dt_real: number;
   active: string; breadth: string; speculation: string; date: string;
@@ -163,7 +154,6 @@ export interface TurnoverStock {
   amount: number | null; mcap: number | null; float_cap: number | null; industry: string;
 }
 export interface TurnoverTop { stocks: TurnoverStock[]; updated: string }
-
 export interface RadarItem {
   title: string; url: string; time: string; source: string; summary?: string; zh?: string;
 }
@@ -212,7 +202,6 @@ export interface GpuRentData {
   forward: GpuForward | null;
   errors: string[] | null;
 }
-
 export interface Holding {
   code: string; name: string; price: number; shares: number; cost: number;
   market_value: number; pnl: number; pnl_pct: number;
@@ -281,7 +270,19 @@ export interface HkCashflow {
   currency: string | null; item_order: string[]; periods: HkCashflowPeriod[];
 }
 
+// Market structure research: public persisted data only; no mock-data fallback.
+export interface CffexMemberSummary { long: number; short: number; long_change: number; short_change: number; net_position: number; signal: string }
+export interface CffexSummary { trade_date: string; members: Record<string, CffexMemberSummary>; rows: number; available: boolean; methodology?: string }
+export interface CffexPositionRow { trade_date: string; product: string; contract: string; member_name: string; rank_type: "long" | "short" | string; rank: number | null; position: number | null; change: number | null; source_url: string; fetched_at: string }
+export interface EtfShareRow { trade_date: string; code: string; name: string; category: string; shares: number; nav: number | null; close: number | null; estimated_assets: number | null; share_change: number | null; estimated_net_flow: number | null; source: string; fetched_at: string }
+export interface NationalTeamGroup { shares: number; share_change: number; estimated_net_flow: number; funds: number }
+export interface NationalTeamSummary { trade_date: string; groups: Record<string, NationalTeamGroup>; proxy: true; disclaimer: string }
 export const api = {
+  cffexSync: (tradeDate?: string) => request<{ trade_date: string; rows: number; source: string; stored: boolean }>("/market-structure/cffex/sync" + (tradeDate ? "?trade_date=" + encodeURIComponent(tradeDate) : ""), "POST"),
+  cffexSummary: (tradeDate?: string) => get<CffexSummary>("/market-structure/cffex/summary" + (tradeDate ? "?trade_date=" + encodeURIComponent(tradeDate) : "")),
+  cffexHistory: (start?: string, end?: string, member?: string) => get<CffexPositionRow[]>("/market-structure/cffex/history?" + new URLSearchParams({ ...(start ? { start } : {}), ...(end ? { end } : {}), ...(member ? { member } : {}) }).toString()),
+  etfSync: (tradeDate?: string) => request<{ trade_date: string; rows: number; source: string; stored: boolean }>("/market-structure/etf/sync" + (tradeDate ? "?trade_date=" + encodeURIComponent(tradeDate) : ""), "POST"),  etfHistory: (start?: string, end?: string, category?: string) => get<EtfShareRow[]>("/market-structure/etf/history?" + new URLSearchParams({ ...(start ? { start } : {}), ...(end ? { end } : {}), ...(category ? { category } : {}) }).toString()),
+  nationalTeamSummary: (tradeDate?: string) => get<NationalTeamSummary>("/market-structure/national-team/summary" + (tradeDate ? "?trade_date=" + encodeURIComponent(tradeDate) : "")),  nationalTeamHistory: (start?: string, end?: string) => get<Array<{ trade_date: string; groups: Record<string, NationalTeamGroup>; proxy: true }>>("/market-structure/national-team/history?" + new URLSearchParams({ ...(start ? { start } : {}), ...(end ? { end } : {}) }).toString()),
   health: () => get<{ ok: boolean }>("/health"),
   indices: () => get<IndexQuote[]>("/indices"),
   marketOverview: () => get<MarketOverview>("/market/overview"),

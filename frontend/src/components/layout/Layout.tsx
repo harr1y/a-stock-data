@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import {
   Activity, Radar, LayoutGrid, Wallet, Settings, Search, NotebookPen,
+  BarChart3,
   Moon, Sun, ChevronsLeft, ChevronsRight, ChevronDown, LineChart, Github, UserRound,
   Cog, Cpu, Database, Cable, Rocket, FlaskConical, Star, FileText, Swords, Thermometer, Gauge,
   Rss, Newspaper, TrendingUp,
@@ -25,6 +26,7 @@ const NAV = [
   { to: "/intel", icon: Radar, label: "资讯雷达" },
   { to: "/signals", icon: Thermometer, label: "产业信号" },
   { to: "/sectors", icon: LayoutGrid, label: "板块中心" },
+  { to: "/market-structure", icon: BarChart3, label: "市场结构" },
   { to: "/stock-data", icon: Search, label: "个股数据" },
   { to: "/debate", icon: Swords, label: "多空辩论" },
   { to: "/watchlist", icon: Star, label: "自选股" },

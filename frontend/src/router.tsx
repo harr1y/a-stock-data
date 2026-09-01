@@ -12,6 +12,7 @@ import { Watchlist } from "@/pages/Watchlist";
 import { MyReports } from "@/pages/MyReports";
 import { Notes } from "@/pages/Notes";
 import { Settings } from "@/pages/Settings";
+import { MarketStructure } from "@/pages/MarketStructure";
 
 export const router = createBrowserRouter([
   {
@@ -31,6 +32,8 @@ export const router = createBrowserRouter([
       { path: "/watchlist", element: <Watchlist /> },
       { path: "/my-reports", element: <MyReports /> },
       { path: "/notes", element: <Notes /> },
+      { path: "/market-structure", element: <MarketStructure /> },
+      { path: "/market-structure/:tab", element: <MarketStructure /> },
       { path: "/settings", element: <Settings /> },
     ],
   },

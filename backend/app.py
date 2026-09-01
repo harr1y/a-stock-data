@@ -28,6 +28,7 @@ import market
 import myreports as mr
 import reflection as reflect_layer
 import signals
+from market_structure import router as market_structure_router
 
 
 from version import read_version
@@ -35,6 +36,7 @@ from version import read_version
 __version__ = read_version()
 
 app = FastAPI(title="Vibe-Research API", version=__version__)
+app.include_router(market_structure_router)
 
 # 每半小时后台刷新持仓数据
 pf.start_scheduler(1800)
